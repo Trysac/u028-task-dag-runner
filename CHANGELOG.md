@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Added `task_dag_runner`: a dependency-graph task runner with deterministic order, cycle detection, bounded retries with injected sleep, JSON-normalised size-capped outputs and resume from an atomic JSON state file.
 - Initial project structure from the factory utility template.
