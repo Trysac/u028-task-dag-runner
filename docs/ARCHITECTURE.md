@@ -2,28 +2,23 @@
 
 ## Purpose
 
-`trysac-task-dag-runner` is a small, dependency-free Python library: Run Python tasks in a dependency graph with bounded retries, injected sleep, deterministic order and resume from an atomic JSON state file
+`trysac-task-dag-runner` is a small, dependency-free Python library that runs Python callables as a dependency graph with bounded retries and resumable JSON state.
 
 ## Shape
 
 ```text
 caller code --> task_dag_runner (public API in __init__.py)
                     |
-                    +-- pure functions, no I/O, no global state
+                    +-- Task, Dag (pure graph logic)
+                    +-- Runner (execution, retries, state file I/O)
 ```
 
-- **Public API**: the names listed in `__all__` of `src/task_dag_runner/__init__.py`. Anything else is
-  internal and may change without a major version.
-- **Errors**: invalid input raises built-in exceptions (`ValueError`, `TypeError`) with a clear
-  message; the library never prints or exits.
-- **Side effects**: none. If a feature needs I/O, isolate it in its own module behind a small
-  interface and record the choice in an ADR.
+- **Module**: a single module, `src/task_dag_runner/__init__.py`.
+- **Dag**: stores tasks by name; `validate()` checks unknown dependencies, detects cycles with an iterative DFS and returns a deterministic order from Kahn's algorithm with a heap.
+- **Runner**: validates the DAG, loads the state file (if any), runs the pending tasks sequentially in order, normalises outputs through JSON and writes the state file atomically (temp file in the same folder, `os.replace`) after each transition.
+- **Errors**: `DagError` with a stable `code` attribute. Messages are clipped to 200 characters.
+- **Logging**: a module logger with a `NullHandler`; the callback failure is logged as a warning.
 
 ## Quality contract
 
-`scripts/check.py` is the single definition of the gates; `fabrica.json` tells the factory and CI
-how to run it. See [TESTING.md](TESTING.md).
-
-## Decisions
-
-Architecture decisions are recorded in [decisions/](decisions/) as numbered ADRs.
+See [TESTING.md](TESTING.md) for the test suite and the coverage policy.
